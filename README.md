@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="banner.png" alt="Android TV Toolkit" width="1000" style="height:auto;">
+  <img src="banner.PNG" alt="Android TV Toolkit" width="1000" style="height:auto;">
 </p>
 
 
