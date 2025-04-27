@@ -1,4 +1,7 @@
-<img src="banner.png">
+<p align="center">
+  <img src="banner.png" alt="Android TV Toolkit" width="1000" height="150"/>
+</p>
+
 # Android TV Toolkit
 
 Lightweight Windows application to debloat TCL/Google Android TV devices, install APKs, and customize the TV experience.
