@@ -1,6 +1,7 @@
 <p align="center">
-  <img src="banner.png" alt="Android TV Toolkit" width="1000" height="150"/>
+  <img src="banner.png" alt="Android TV Toolkit" width="1000" style="height:auto;">
 </p>
+
 
 # Android TV Toolkit
 
