@@ -33,6 +33,23 @@ Built with ❤️ using Python and PySimpleGUI.
 
 ---
 
+## Optional: FLauncher (Custom Launcher)
+
+If you plan to disable Google TV Launcher, install a backup launcher first.
+
+Download FLauncher APK here:
+- [Download FLauncher (v1.3.3)](https://github.com/zyprex/FLauncher/releases)
+
+Steps:
+1. Install FLauncher using the "Install APK" button inside this Toolkit.
+2. Open FLauncher manually from your TV Apps list.
+3. (Optional) Set it as default launcher if prompted.
+
+✅ FLauncher is a clean, open-source, ad-free Android TV launcher.
+
+---
+
+
 ## Credits
 Inspired by the Reddit Android TV community.  
 Built for the community to simplify TV customization.
