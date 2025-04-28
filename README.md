@@ -120,15 +120,20 @@ You can download it safely here:
 🔗 [Download FLauncher from APKPure](https://apkpure.com/flauncher/me.efesser.flauncher)
 
 ---
+🛠️ About the EXE
+The run_toolkit.exe included in this project was built from the open-source run_toolkit.pyw script using PyInstaller.
 
-## 🎉 Open Source Launch Badge
+If you prefer, you can rebuild the EXE yourself using the following steps:
+python -m pip install pyinstaller
+pyinstaller --onefile --windowed run_toolkit.pyw
+
+This project is fully open-source — nothing hidden.
+
+You can review, modify, or rebuild the Toolkit freely based on your needs.
 
 ---
 
 ![Open Source Launch](https://img.shields.io/badge/Launch-Android%20TV%20Toolkit%20v1.0-brightgreen?style=for-the-badge)
-
----
-
 
 ## License
 This project is licensed under the MIT License.
