@@ -43,7 +43,7 @@ Built with ❤️ using Python and PySimpleGUI.
 If you plan to disable Google TV Launcher, install a backup launcher first.
 
 Download FLauncher APK here:
-- [Download FLauncher (v1.3.3)](https://github.com/zyprex/FLauncher/releases)
+- [Download FLauncher (v1.3.3)](https://github.com/zyprex/FLauncher/tree/main/app/release)
 
 Steps:
 1. Install FLauncher using the "Install APK" button inside this Toolkit.
