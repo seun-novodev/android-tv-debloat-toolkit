@@ -120,7 +120,8 @@ You can download it safely here:
 🔗 [Download FLauncher from APKPure](https://apkpure.com/flauncher/me.efesser.flauncher)
 
 ---
-🛠️ About the EXE
+## 🛠️ About the EXE
+
 The run_toolkit.exe included in this project was built from the open-source run_toolkit.pyw script using PyInstaller.
 
 If you prefer, you can rebuild the EXE yourself using the following steps:
