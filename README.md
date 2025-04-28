@@ -42,8 +42,7 @@ Built with ❤️ using Python and PySimpleGUI.
 
 If you plan to disable Google TV Launcher, install a backup launcher first.
 
-Download FLauncher APK here:
-- [Download FLauncher (v1.3.3)](https://github.com/zyprex/FLauncher/tree/main/app/release)
+Download FLauncher APK here: See where to download below (there might be other sources online)
 
 Steps:
 1. Install FLauncher using the "Install APK" button inside this Toolkit.
@@ -54,12 +53,82 @@ Steps:
 
 ---
 
-
 ## Credits
 Inspired by the Reddit Android TV community.  
 Built for the community to simplify TV customization.
 
 ---
+## 📖 FAQ
+
+---
+
+**Q: Do I need to install Python to run the Toolkit?**  
+**A:** No. The provided `run_toolkit.exe` is fully standalone. You can unzip and run without installing anything else.
+
+---
+
+**Q: Will this work on all Android TV devices?**  
+**A:** The Toolkit is designed for Android TV devices that allow ADB Debugging. It works with TCL TVs, Onn 4K boxes, and Nvidia Shield TV (safe mode recommended first).
+
+---
+
+**Q: What if I don't see Developer Options on my TV?**  
+**A:** Go to **Settings → Device Preferences → About → Build Number** and click it 7 times to unlock Developer Options.
+
+---
+
+**Q: Is there a risk of disabling important apps?**  
+**A:** Always start with "**Debloat TV - Safe Mode**," which carefully removes common bloatware without affecting critical system apps.
+
+---
+
+**Q: Is the Toolkit free to use?**  
+**A:** Yes! It’s open-source, released under the MIT License.
+
+---
+
+## 🚀 How to Use the Toolkit
+
+---
+
+**Step 1:** Enable Developer Options on your Android TV:
+- Go to **Settings → Device Preferences → About → Build Number** and click it 7 times.
+
+**Step 2:** Enable **ADB Debugging** inside Developer Options.
+
+**Step 3:** Unzip the Toolkit and open `run_toolkit.exe`.
+
+**Step 4:** Enter your TV's IP Address and click **Connect**.
+
+**Step 5:** Choose a function:
+- **Debloat TV (Safe Mode)** — recommended first
+- **Install APKs** (such as FLauncher)
+- **Remove Google TV Recommendations**
+- **Disable Google Launcher** (only after installing a backup launcher!)
+
+**Step 6:** Enjoy a faster, cleaner Android TV experience!
+
+---
+
+## 📥 Where to Download FLauncher
+
+---
+
+FLauncher is a minimalist launcher recommended before disabling the default Google TV launcher.  
+You can download it safely here:
+
+🔗 [Download FLauncher from APKPure](https://apkpure.com/flauncher/me.efesser.flauncher)
+
+---
+
+## 🎉 Open Source Launch Badge
+
+---
+
+![Open Source Launch](https://img.shields.io/badge/Launch-Android%20TV%20Toolkit%20v1.0-brightgreen?style=for-the-badge)
+
+---
+
 
 ## License
 This project is licensed under the MIT License.
