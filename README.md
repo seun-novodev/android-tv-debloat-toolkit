@@ -7,7 +7,7 @@
 
 Lightweight Windows application to debloat TCL/Google Android TV devices, install APKs, and customize the TV experience.
 
-Built with ❤️ using Python and PySimpleGUI.
+Built using Python and PySimpleGUI.
 
 ---
 
@@ -120,6 +120,27 @@ You can download it safely here:
 🔗 [Download FLauncher from APKPure](https://apkpure.com/flauncher/me.efesser.flauncher)
 
 ---
+
+## 🛠️ Troubleshooting: ADB Connection Issues
+
+If you encounter a problem connecting your TV (for example: cannot connect to [IP address]:5555,
+or adb.exe not compatible with Windows error), it may be related to the version of ADB included.
+
+To fix it:
+You can manually replace the adb.exe, AdbWinApi.dll, and AdbWinUsbApi.dll files in the Toolkit's adb folder with the latest version from: https://adbdownload.com/ or directly from the official Google platform-tools if you prefer: https://developer.android.com/studio/releases/platform-tools
+
+Steps to update ADB manually:
+
+Download the latest ADB tools.
+
+Copy adb.exe, AdbWinApi.dll, and AdbWinUsbApi.dll.
+
+Replace the existing files in the adb folder inside the Toolkit directory.
+
+After replacing, try connecting your TV again through the Toolkit.
+
+---
+
 ## 🛠️ About the EXE
 
 The run_toolkit.exe included in this project was built from the open-source run_toolkit.pyw script using PyInstaller.
