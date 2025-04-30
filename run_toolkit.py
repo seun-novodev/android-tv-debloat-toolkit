@@ -1,8 +1,24 @@
+# Android TV Toolkit v1.1 – Final Fixed Version with Launcher Connection Patch
+# Features: Safe Debloat (scrollable + apply working), Advanced Debloat (scrollable + apply working), APK Install, Launcher Disable (reconnect patch), App List Viewer, TV Connect
+
 import os
 import PySimpleGUI as sg
 
 connected = False
 tv_ip = ""
+
+# Helper to check/reconnect to TV before any ADB command
+def reconnect_check():
+    global connected, tv_ip
+    if not connected or not tv_ip:
+        return False
+    test = os.popen(f'adb devices').read()
+    if tv_ip not in test:
+        reconnect = os.popen(f'adb connect {tv_ip}').read()
+        if "connected" in reconnect or "already connected" in reconnect:
+            return True
+        return False
+    return True
 
 safe_apps = [
     ("Android TV Recommendations", "com.google.android.tvrecommendations"),
@@ -86,7 +102,7 @@ def connect_to_tv():
     window.close()
 
 def install_apk():
-    if not connected:
+    if not reconnect_check():
         sg.popup('Connect to a TV first!')
         return
     layout = [[sg.Text('Select APK to install:')], [sg.Input(), sg.FileBrowse(file_types=(("APK Files", "*.apk"),))],
@@ -109,23 +125,21 @@ def install_apk():
     window.close()
 
 def disable_google_launcher():
-    if not connected:
-        sg.popup('Connect to a TV first!')
+    if not reconnect_check():
+        sg.popup('❌ TV not connected. Use "Connect to TV" first.')
         return
-    result = os.popen(f'adb connect {tv_ip} && adb shell pm disable-user --user 0 com.google.android.tvlauncher').read()
+    result = os.popen(f'adb shell pm disable-user --user 0 com.google.android.tvlauncher').read()
     sg.popup_scrolled(result, title="Disable Launcher Result")
 
 def safe_debloat_checklist():
-    if not connected:
+    if not reconnect_check():
         sg.popup('Connect to a TV first!')
         return
     checkbox_layout = [[sg.Checkbox(label, key=package, default=True)] for label, package in safe_apps]
-    layout = [
-        [sg.Text('Select the safe apps you want to disable:')],
-        [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
-        [sg.Button('Select All'), sg.Button('Deselect All')],
-        [sg.Button('Apply Selected Changes'), sg.Button('Cancel')]
-    ]
+    layout = [[sg.Text('Select the safe apps you want to disable:')],
+              [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
+              [sg.Button('Select All'), sg.Button('Deselect All')],
+              [sg.Button('Apply Selected Changes'), sg.Button('Cancel')]]
     window = sg.Window('Safe Debloat (Choose Apps)', layout)
     while True:
         event, values = window.read()
@@ -154,16 +168,14 @@ def safe_debloat_checklist():
     window.close()
 
 def advanced_debloat():
-    if not connected:
+    if not reconnect_check():
         sg.popup('Connect to a TV first!')
         return
     checkbox_layout = [[sg.Checkbox(f'{risk} {label}', key=package)] for label, package, risk in apps]
-    layout = [
-        [sg.Text('Legend:  ✅ Safe   ⚠️ Caution   🚫 Critical', text_color='blue')],
-        [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
-        [sg.Button('Select All Safe Apps'), sg.Button('Deselect All')],
-        [sg.Button('Apply Selected Changes'), sg.Button('Cancel')]
-    ]
+    layout = [[sg.Text('Legend:  ✅ Safe   ⚠️ Caution   🚫 Critical', text_color='blue')],
+              [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
+              [sg.Button('Select All Safe Apps'), sg.Button('Deselect All')],
+              [sg.Button('Apply Selected Changes'), sg.Button('Cancel')]]
     window = sg.Window('Advanced Debloat', layout)
     while True:
         event, values = window.read()
@@ -206,15 +218,13 @@ def show_safe_debloat_list():
     sg.popup_scrolled(safe_list, title="Apps Disabled in Safe Debloat Mode", size=(80, 30))
 
 def main_menu():
-    layout = [
-        [sg.Button('Connect to TV')],
-        [sg.Button('Safe Debloat')],
-        [sg.Button('Advanced Debloat')],
-        [sg.Button('Install APK')],
-        [sg.Button('Disable Google TV Launcher')],
-        [sg.Button('View Safe Debloat App List')],
-        [sg.Button('Exit')]
-    ]
+    layout = [[sg.Button('Connect to TV')],
+              [sg.Button('Safe Debloat')],
+              [sg.Button('Advanced Debloat')],
+              [sg.Button('Install APK')],
+              [sg.Button('Disable Google TV Launcher')],
+              [sg.Button('View Safe Debloat App List')],
+              [sg.Button('Exit')]]
     window = sg.Window('Android TV Toolkit v1.1', layout)
     while True:
         event, _ = window.read()
