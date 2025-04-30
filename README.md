@@ -2,6 +2,8 @@
   <img src="banner.PNG" alt="Android TV Toolkit" width="1000" style="height:auto;">
 </p>
 
+[![Latest Release](https://img.shields.io/github/v/release/seun-novodev/android-tv-debloat-toolkit?style=for-the-badge)](https://github.com/seun-novodev/android-tv-debloat-toolkit/releases/latest)
+
 
 # Android TV Toolkit
 
