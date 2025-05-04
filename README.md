@@ -157,6 +157,24 @@ You can review, modify, or rebuild the Toolkit freely based on your needs.
 
 ---
 
+## 🖥️ macOS Compatibility
+
+The `run_toolkit.py` script is fully cross-platform and should work on macOS with:
+
+- **Python 3.8 or later**
+- Install required libraries:
+  ```bash
+  pip3 install PySimpleGUI
+
+- Install ADB: brew install android-platform-tools
+- Run the toolkit: python3 path/to/run_toolkit.py
+
+A native .app version is not yet available, but we’re looking for community testers to help build one!
+👉 Join the macOS testing discussion https://github.com/seun-novodev/android-tv-debloat-toolkit/discussions/2
+
+
+---
+
 ![Open Source Launch](https://img.shields.io/badge/Launch-Android%20TV%20Toolkit%20v1.0-brightgreen?style=for-the-badge)
 
 ## License
