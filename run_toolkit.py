@@ -1,6 +1,17 @@
+import os
 import re
 import subprocess
+import sys
 import PySimpleGUI as sg
+
+# Resolve the adb executable: prefer the bundled adb/ subfolder next to this
+# script so users don't need ADB on their system PATH.
+def _find_adb():
+    script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    local = os.path.join(script_dir, "adb", "adb.exe")
+    return local if os.path.isfile(local) else "adb"
+
+ADB = _find_adb()
 
 
 # Fix 3: Replace global mutable state with a simple state container
@@ -30,14 +41,14 @@ def run_adb(*args):
     """Run an adb command and return (stdout, stderr, returncode)."""
     try:
         result = subprocess.run(
-            ["adb", *args],
+            [ADB, *args],
             capture_output=True,
             text=True,
             timeout=15,
         )
         return result.stdout, result.stderr, result.returncode
     except FileNotFoundError:
-        return "", "adb not found. Make sure the adb folder is in your PATH or next to this script.", 1
+        return "", f"adb not found at '{ADB}'. Make sure the adb/ folder is present next to this script.", 1
     except subprocess.TimeoutExpired:
         return "", "ADB command timed out.", 1
 
@@ -169,7 +180,6 @@ def install_apk():
             if not apk_path:
                 sg.popup("No file selected.")
                 continue
-            import os
             remote_path = f"/sdcard/{os.path.basename(apk_path)}"
             # Fix 1 & 4: subprocess list args; Fix 4: use state.target (consistent port)
             push_out, push_err, push_rc = run_adb("-s", state.target, "push", apk_path, "/sdcard/")
