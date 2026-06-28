@@ -1,24 +1,60 @@
-# Android TV Toolkit v1.1 – Final Fixed Version with Launcher Connection Patch
-# Features: Safe Debloat (scrollable + apply working), Advanced Debloat (scrollable + apply working), APK Install, Launcher Disable (reconnect patch), App List Viewer, TV Connect
-
-import os
+import re
+import subprocess
 import PySimpleGUI as sg
 
-connected = False
-tv_ip = ""
 
-# Helper to check/reconnect to TV before any ADB command
+# Fix 3: Replace global mutable state with a simple state container
+class TVConnection:
+    def __init__(self):
+        self.connected = False
+        self.ip = ""
+        self.port = "5555"
+
+    @property
+    def target(self):
+        return f"{self.ip}:{self.port}"
+
+
+state = TVConnection()
+
+
+# Fix 2: IP address validation
+def is_valid_ip(ip):
+    return bool(re.match(r"^\d{1,3}(\.\d{1,3}){3}$", ip)) and all(
+        0 <= int(p) <= 255 for p in ip.split(".")
+    )
+
+
+# Fix 1 & 6: Use subprocess (not os.popen), scope reconnect check to specific device
+def run_adb(*args):
+    """Run an adb command and return (stdout, stderr, returncode)."""
+    try:
+        result = subprocess.run(
+            ["adb", *args],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        return result.stdout, result.stderr, result.returncode
+    except FileNotFoundError:
+        return "", "adb not found. Make sure the adb folder is in your PATH or next to this script.", 1
+    except subprocess.TimeoutExpired:
+        return "", "ADB command timed out.", 1
+
+
 def reconnect_check():
-    global connected, tv_ip
-    if not connected or not tv_ip:
+    # Fix 6: scope device check to the connected target, not all devices
+    if not state.connected or not state.ip:
         return False
-    test = os.popen(f'adb devices').read()
-    if tv_ip not in test:
-        reconnect = os.popen(f'adb connect {tv_ip}').read()
-        if "connected" in reconnect or "already connected" in reconnect:
+    stdout, _, _ = run_adb("devices")
+    if state.target not in stdout:
+        stdout, _, rc = run_adb("connect", state.target)
+        if rc == 0 and ("connected" in stdout or "already connected" in stdout):
             return True
+        state.connected = False
         return False
     return True
+
 
 safe_apps = [
     ("Android TV Recommendations", "com.google.android.tvrecommendations"),
@@ -55,7 +91,7 @@ safe_apps = [
     ("Netflix TV App", "com.netflix.ninja"),
     ("AOS TV", "com.aos.aostv"),
     ("Freeview Explore", "uk.co.freeview.explore"),
-    ("Freeview On Now", "uk.co.freeview.onnow")
+    ("Freeview On Now", "uk.co.freeview.onnow"),
 ]
 
 apps = [
@@ -78,171 +114,223 @@ apps = [
     ("TCL Multiscreen Interaction", "com.tcl.MultiScreenInteraction_TV", "⚠️"),
     ("System UI", "com.android.systemui", "🚫"),
     ("Google Play Services", "com.google.android.gms", "🚫"),
-    ("TCL Framework Core", "com.tcl.framework.custom", "🚫")
+    ("TCL Framework Core", "com.tcl.framework.custom", "🚫"),
 ]
 
+
 def connect_to_tv():
-    global connected, tv_ip
-    layout = [[sg.Text('Enter TV IP Address:')], [sg.InputText(key='IP')],
-              [sg.Button('Connect'), sg.Button('Cancel')]]
-    window = sg.Window('Connect to TV', layout)
+    layout = [
+        [sg.Text("Enter TV IP Address:")],
+        [sg.InputText(key="IP")],
+        [sg.Button("Connect"), sg.Button("Cancel")],
+    ]
+    window = sg.Window("Connect to TV", layout)
     while True:
         event, values = window.read()
-        if event in (sg.WINDOW_CLOSED, 'Cancel'):
+        if event in (sg.WINDOW_CLOSED, "Cancel"):
             break
-        if event == 'Connect':
-            tv_ip = values['IP']
-            result = os.popen(f'adb connect {tv_ip}').read()
-            if "connected" in result or "already connected" in result:
-                connected = True
-                sg.popup('✅ Connected successfully!')
+        if event == "Connect":
+            ip = values["IP"].strip()
+            # Fix 2: validate IP before using it in any command
+            if not is_valid_ip(ip):
+                sg.popup("❌ Invalid IP address. Please enter a valid IPv4 address (e.g. 192.168.1.100).")
+                continue
+            state.ip = ip
+            # Fix 1: subprocess with list args — no shell, no injection
+            stdout, stderr, rc = run_adb("connect", state.target)
+            # Fix 5: check return code, not just string content
+            if rc == 0 and ("connected" in stdout or "already connected" in stdout):
+                state.connected = True
+                sg.popup(f"✅ Connected to {state.target} successfully!")
             else:
-                sg.popup('❌ Failed to connect. Check your TV IP and ADB Debugging settings.')
+                state.connected = False
+                detail = stderr.strip() or stdout.strip() or "Unknown error"
+                sg.popup(f"❌ Failed to connect.\n\n{detail}\n\nCheck your TV IP and ADB Debugging settings.")
             break
     window.close()
+
 
 def install_apk():
     if not reconnect_check():
-        sg.popup('Connect to a TV first!')
+        sg.popup("❌ Not connected. Use 'Connect to TV' first.")
         return
-    layout = [[sg.Text('Select APK to install:')], [sg.Input(), sg.FileBrowse(file_types=(("APK Files", "*.apk"),))],
-              [sg.Button('Install'), sg.Button('Cancel')]]
-    window = sg.Window('Install APK', layout)
+    layout = [
+        [sg.Text("Select APK to install:")],
+        [sg.Input(), sg.FileBrowse(file_types=(("APK Files", "*.apk"),))],
+        [sg.Button("Install"), sg.Button("Cancel")],
+    ]
+    window = sg.Window("Install APK", layout)
     while True:
         event, values = window.read()
-        if event in (sg.WINDOW_CLOSED, 'Cancel'):
+        if event in (sg.WINDOW_CLOSED, "Cancel"):
             break
-        if event == 'Install':
+        if event == "Install":
             apk_path = values[0]
             if not apk_path:
-                sg.popup('No file selected.')
+                sg.popup("No file selected.")
                 continue
-            push_result = os.popen(f'adb -s {tv_ip}:5555 push "{apk_path}" /sdcard/').read()
-            install_result = os.popen(f'adb -s {tv_ip}:5555 shell pm install /sdcard/{os.path.basename(apk_path)}').read()
-            result_text = f"Push Result:\n{push_result}\n\nInstall Result:\n{install_result}"
-            sg.popup_scrolled(result_text, title="APK Install Log", size=(60, 20))
+            import os
+            remote_path = f"/sdcard/{os.path.basename(apk_path)}"
+            # Fix 1 & 4: subprocess list args; Fix 4: use state.target (consistent port)
+            push_out, push_err, push_rc = run_adb("-s", state.target, "push", apk_path, "/sdcard/")
+            install_out, install_err, install_rc = run_adb(
+                "-s", state.target, "shell", "pm", "install", "-r", remote_path
+            )
+            # Fix 5: surface errors clearly
+            lines = []
+            lines.append(f"Push {'✅ OK' if push_rc == 0 else '❌ Failed'}:")
+            lines.append(push_out or push_err)
+            lines.append(f"\nInstall {'✅ OK' if install_rc == 0 else '❌ Failed'}:")
+            lines.append(install_out or install_err)
+            sg.popup_scrolled("\n".join(lines), title="APK Install Log", size=(60, 20))
             break
     window.close()
 
+
 def disable_google_launcher():
     if not reconnect_check():
-        sg.popup('❌ TV not connected. Use "Connect to TV" first.')
+        sg.popup("❌ TV not connected. Use 'Connect to TV' first.")
         return
-    result = os.popen(f'adb shell pm disable-user --user 0 com.google.android.tvlauncher').read()
-    sg.popup_scrolled(result, title="Disable Launcher Result")
+    # Fix 1: subprocess list args
+    stdout, stderr, rc = run_adb(
+        "-s", state.target, "shell", "pm", "disable-user", "--user", "0",
+        "com.google.android.tvlauncher"
+    )
+    # Fix 5: report outcome clearly
+    result = stdout or stderr or "No output received."
+    title = "✅ Launcher Disabled" if rc == 0 else "❌ Disable Failed"
+    sg.popup_scrolled(result, title=title)
+
+
+def _run_debloat(app_list):
+    """Shared debloat logic: disables each package and returns a result string."""
+    output_lines = []
+    for label, pkg in app_list:
+        stdout, stderr, rc = run_adb(
+            "-s", state.target, "shell", "pm", "disable-user", "--user", "0", pkg
+        )
+        # Fix 5: use return code, not fragile string matching
+        if rc == 0 and "new state: disabled" in stdout:
+            status = "✅ Disabled"
+        elif "already" in stdout.lower() or "already" in stderr.lower():
+            status = "⚠️ Already disabled"
+        elif rc != 0:
+            detail = (stderr or stdout).strip()
+            status = f"❌ Error — {detail}"
+        else:
+            status = f"⚠️ Unexpected response — {stdout.strip()}"
+        output_lines.append(f"{label} ({pkg}): {status}")
+    output_lines.append("\nDebloating complete.")
+    return "\n".join(output_lines)
+
 
 def safe_debloat_checklist():
     if not reconnect_check():
-        sg.popup('Connect to a TV first!')
+        sg.popup("❌ Not connected. Use 'Connect to TV' first.")
         return
-    checkbox_layout = [[sg.Checkbox(label, key=package, default=True)] for label, package in safe_apps]
-    layout = [[sg.Text('Select the safe apps you want to disable:')],
-              [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
-              [sg.Button('Select All'), sg.Button('Deselect All')],
-              [sg.Button('Apply Selected Changes'), sg.Button('Cancel')]]
-    window = sg.Window('Safe Debloat (Choose Apps)', layout)
+    checkbox_layout = [
+        [sg.Checkbox(label, key=package, default=True)] for label, package in safe_apps
+    ]
+    layout = [
+        [sg.Text("Select the safe apps you want to disable:")],
+        [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
+        [sg.Button("Select All"), sg.Button("Deselect All")],
+        [sg.Button("Apply Selected Changes"), sg.Button("Cancel")],
+    ]
+    window = sg.Window("Safe Debloat (Choose Apps)", layout)
     while True:
         event, values = window.read()
-        if event in (sg.WINDOW_CLOSED, 'Cancel'):
+        if event in (sg.WINDOW_CLOSED, "Cancel"):
             break
-        elif event == 'Select All':
+        elif event == "Select All":
             for _, package in safe_apps:
                 window[package].update(value=True)
-        elif event == 'Deselect All':
+        elif event == "Deselect All":
             for _, package in safe_apps:
                 window[package].update(value=False)
-        elif event == 'Apply Selected Changes':
-            selected = [pkg for _, pkg in safe_apps if values[pkg]]
+        elif event == "Apply Selected Changes":
+            selected = [(lbl, pkg) for lbl, pkg in safe_apps if values[pkg]]
             if not selected:
-                sg.popup('No apps selected.')
+                sg.popup("No apps selected.")
                 continue
-            output = ''
-            for label, pkg in safe_apps:
-                if pkg in selected:
-                    result = os.popen(f'adb shell pm disable-user --user 0 {pkg}').read()
-                    status = '✅ Success' if 'new state: disabled-user' in result else '⚠️ Already Disabled or Error'
-                    output += f"Disabling {label} ({pkg})... {status}\n\n"
-            output += "\nDebloating Completed!"
+            output = _run_debloat(selected)
             sg.popup_scrolled(output, title="Safe Debloat Result", size=(60, 20))
             break
     window.close()
 
+
 def advanced_debloat():
     if not reconnect_check():
-        sg.popup('Connect to a TV first!')
+        sg.popup("❌ Not connected. Use 'Connect to TV' first.")
         return
-    checkbox_layout = [[sg.Checkbox(f'{risk} {label}', key=package)] for label, package, risk in apps]
-    layout = [[sg.Text('Legend:  ✅ Safe   ⚠️ Caution   🚫 Critical', text_color='blue')],
-              [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
-              [sg.Button('Select All Safe Apps'), sg.Button('Deselect All')],
-              [sg.Button('Apply Selected Changes'), sg.Button('Cancel')]]
-    window = sg.Window('Advanced Debloat', layout)
+    checkbox_layout = [
+        [sg.Checkbox(f"{risk} {label}", key=package)] for label, package, risk in apps
+    ]
+    layout = [
+        [sg.Text("Legend:  ✅ Safe   ⚠️ Caution   🚫 Critical", text_color="blue")],
+        [sg.Column(checkbox_layout, scrollable=True, size=(500, 400))],
+        [sg.Button("Select All Safe Apps"), sg.Button("Deselect All")],
+        [sg.Button("Apply Selected Changes"), sg.Button("Cancel")],
+    ]
+    window = sg.Window("Advanced Debloat", layout)
     while True:
         event, values = window.read()
-        if event in (sg.WINDOW_CLOSED, 'Cancel'):
+        if event in (sg.WINDOW_CLOSED, "Cancel"):
             break
-        elif event == 'Select All Safe Apps':
+        elif event == "Select All Safe Apps":
             for label, package, risk in apps:
-                if risk == '✅':
+                if risk == "✅":
                     window[package].update(value=True)
-        elif event == 'Deselect All':
+        elif event == "Deselect All":
             for _, package, _ in apps:
                 window[package].update(value=False)
-        elif event == 'Apply Selected Changes':
-            selected = [pkg for _, pkg, _ in apps if values[pkg]]
+        elif event == "Apply Selected Changes":
+            selected = [(lbl, pkg) for lbl, pkg, _ in apps if values[pkg]]
             if not selected:
-                sg.popup('No apps selected.')
+                sg.popup("No apps selected.")
                 continue
-            output = ''
-            for label, pkg, _ in apps:
-                if pkg in selected:
-                    result = os.popen(f'adb shell pm disable-user --user 0 {pkg}').read()
-                    status = '✅ Success' if 'new state: disabled-user' in result else '⚠️ Already Disabled or Error'
-                    output += f"Disabling {label} ({pkg})... {status}\n\n"
-            output += "\nDebloating Completed!"
+            output = _run_debloat(selected)
             sg.popup_scrolled(output, title="Advanced Debloat Result", size=(60, 20))
             break
     window.close()
 
+
 def show_safe_debloat_list():
-    safe_list = (
-        "Apps disabled in Safe Debloat mode:\n"
-        "- Android TV Recommendations\n"
-        "- Google Play Movies\n"
-        "- TCL Gallery, Dashboard, and Boot Ads\n"
-        "- Netflix TV App\n"
-        "- Chromecast receiver\n"
-        "- TCL/Freeview region bloat\n"
-        "...and more.\n"
-    )
-    sg.popup_scrolled(safe_list, title="Apps Disabled in Safe Debloat Mode", size=(80, 30))
+    lines = ["Apps disabled in Safe Debloat mode:\n"]
+    for label, package in safe_apps:
+        lines.append(f"  • {label}  ({package})")
+    sg.popup_scrolled("\n".join(lines), title="Apps Disabled in Safe Debloat Mode", size=(80, 30))
+
 
 def main_menu():
-    layout = [[sg.Button('Connect to TV')],
-              [sg.Button('Safe Debloat')],
-              [sg.Button('Advanced Debloat')],
-              [sg.Button('Install APK')],
-              [sg.Button('Disable Google TV Launcher')],
-              [sg.Button('View Safe Debloat App List')],
-              [sg.Button('Exit')]]
-    window = sg.Window('Android TV Toolkit v1.1', layout)
+    layout = [
+        [sg.Button("Connect to TV")],
+        [sg.Button("Safe Debloat")],
+        [sg.Button("Advanced Debloat")],
+        [sg.Button("Install APK")],
+        [sg.Button("Disable Google TV Launcher")],
+        [sg.Button("View Safe Debloat App List")],
+        [sg.Button("Exit")],
+    ]
+    window = sg.Window("Android TV Toolkit v1.2", layout)
     while True:
         event, _ = window.read()
-        if event in (sg.WINDOW_CLOSED, 'Exit'):
+        if event in (sg.WINDOW_CLOSED, "Exit"):
             break
-        elif event == 'Connect to TV':
+        elif event == "Connect to TV":
             connect_to_tv()
-        elif event == 'Safe Debloat':
+        elif event == "Safe Debloat":
             safe_debloat_checklist()
-        elif event == 'Advanced Debloat':
+        elif event == "Advanced Debloat":
             advanced_debloat()
-        elif event == 'Install APK':
+        elif event == "Install APK":
             install_apk()
-        elif event == 'Disable Google TV Launcher':
+        elif event == "Disable Google TV Launcher":
             disable_google_launcher()
-        elif event == 'View Safe Debloat App List':
+        elif event == "View Safe Debloat App List":
             show_safe_debloat_list()
     window.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main_menu()
