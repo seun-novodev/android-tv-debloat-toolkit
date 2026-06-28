@@ -129,6 +129,62 @@ apps = [
 ]
 
 
+def pair_and_connect():
+    """Android 11+ / Chromecast: pair with a code first, then connect."""
+    layout = [
+        [sg.Text("Step 1 — Pairing (from your TV's Wireless Debugging screen)")],
+        [sg.Text("TV IP Address:"), sg.InputText(key="IP", size=(20, 1))],
+        [sg.Text("Pairing Port: "), sg.InputText(key="PAIR_PORT", size=(10, 1))],
+        [sg.Text("Pairing Code: "), sg.InputText(key="PAIR_CODE", size=(15, 1))],
+        [sg.HorizontalSeparator()],
+        [sg.Text("Step 2 — Connection port (shown under 'IP address & Port' on your TV)")],
+        [sg.Text("Debug Port:   "), sg.InputText(key="DEBUG_PORT", default_text="5555", size=(10, 1))],
+        [sg.Button("Pair & Connect"), sg.Button("Cancel")],
+    ]
+    window = sg.Window("Pair & Connect (Android 11+ / Chromecast)", layout)
+    while True:
+        event, values = window.read()
+        if event in (sg.WINDOW_CLOSED, "Cancel"):
+            break
+        if event == "Pair & Connect":
+            ip = values["IP"].strip()
+            pair_port = values["PAIR_PORT"].strip()
+            pair_code = values["PAIR_CODE"].strip()
+            debug_port = values["DEBUG_PORT"].strip() or "5555"
+
+            if not is_valid_ip(ip):
+                sg.popup("❌ Invalid IP address. Enter a valid IPv4 address (e.g. 192.168.1.100).")
+                continue
+            if not pair_port.isdigit() or not debug_port.isdigit():
+                sg.popup("❌ Ports must be numbers.")
+                continue
+            if not pair_code:
+                sg.popup("❌ Pairing code cannot be empty.")
+                continue
+
+            # Step 1: pair
+            stdout, stderr, rc = run_adb("pair", f"{ip}:{pair_port}", pair_code)
+            if rc != 0 or ("successfully" not in stdout.lower() and "paired" not in stdout.lower()):
+                detail = stderr.strip() or stdout.strip() or "Unknown error"
+                sg.popup(f"❌ Pairing failed.\n\n{detail}\n\nCheck the IP, port, and code shown on your TV.")
+                continue
+
+            # Step 2: connect
+            state.ip = ip
+            state.port = debug_port
+            stdout, stderr, rc = run_adb("connect", state.target)
+            if rc == 0 and ("connected" in stdout or "already connected" in stdout):
+                state.connected = True
+                sg.popup(f"✅ Paired and connected to {state.target} successfully!")
+                break
+            else:
+                state.connected = False
+                detail = stderr.strip() or stdout.strip() or "Unknown error"
+                sg.popup(f"⚠️ Paired OK but connection failed.\n\n{detail}\n\nCheck the debug port shown under 'IP address & Port' on your TV.")
+            break
+    window.close()
+
+
 def connect_to_tv():
     layout = [
         [sg.Text("Enter TV IP Address:")],
@@ -315,6 +371,7 @@ def show_safe_debloat_list():
 def main_menu():
     layout = [
         [sg.Button("Connect to TV")],
+        [sg.Button("Pair & Connect (Android 11+ / Chromecast)")],
         [sg.Button("Safe Debloat")],
         [sg.Button("Advanced Debloat")],
         [sg.Button("Install APK")],
@@ -329,6 +386,8 @@ def main_menu():
             break
         elif event == "Connect to TV":
             connect_to_tv()
+        elif event == "Pair & Connect (Android 11+ / Chromecast)":
+            pair_and_connect()
         elif event == "Safe Debloat":
             safe_debloat_checklist()
         elif event == "Advanced Debloat":
