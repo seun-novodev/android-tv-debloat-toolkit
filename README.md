@@ -10,10 +10,13 @@ Lightweight Windows application to debloat TCL/Google Android TV devices, instal
 
 Built using Python and PySimpleGUI.
 
+> **Maintenance status:** This project is not actively maintained. It works as described and issues are read, but updates and responses may be slow. Pull requests are welcome — see the source code, it's short and straightforward.
+
 ---
 
 ## Features
 - Connect to Android TV over Wi-Fi (ADB Wireless)
+- Pair & Connect for Android 11+ / Chromecast with Google TV (Wireless Debugging)
 - Debloat TCL and Google bloatware
 - Remove Google TV Recommendations
 - Install APKs remotely (FLauncher included)
@@ -65,6 +68,8 @@ Open a Command Prompt and run:
 pip install PySimpleGUI
 ```
 
+> **PySimpleGUI licence note:** PySimpleGUI v5+ requires a free account at [PySimpleGUI.com](https://www.pysimplegui.com) to suppress the licence prompt. No payment is needed for personal use — just sign up and the prompt goes away.
+
 ### Step 3 — Download this project
 
 Click the green **Code** button on this page → **Download ZIP**, then unzip it anywhere.
@@ -86,12 +91,18 @@ Or double-click `run_toolkit.py` if Python is associated with `.py` files on you
 
 ### Step 6 — Connect and use
 
+**Standard Android TV (TCL, Onn, Nvidia Shield):**
 1. Click **Connect to TV** and enter your TV's IP address (find it under **Settings → Network → About**).
-2. Choose a function:
-   - **Safe Debloat** — recommended first run; removes common bloatware safely
-   - **Advanced Debloat** — more options with risk ratings (✅ Safe / ⚠️ Caution / 🚫 Critical)
-   - **Install APK** — install apps directly to your TV
-   - **Disable Google TV Launcher** — only do this after installing a backup launcher like FLauncher
+
+**Android 11+ / Chromecast with Google TV:**
+1. Enable **Wireless Debugging** in Developer Options (separate from ADB Debugging).
+2. Click **Pair & Connect (Android 11+ / Chromecast)** and fill in the IP, Pairing Port, Pairing Code, and Debug Port shown on your TV's Wireless Debugging screen.
+
+Then choose a function:
+- **Safe Debloat** — recommended first run; removes common bloatware safely
+- **Advanced Debloat** — more options with risk ratings (✅ Safe / ⚠️ Caution / 🚫 Critical)
+- **Install APK** — install apps directly to your TV
+- **Disable Google TV Launcher** — only do this after installing a backup launcher like FLauncher
 
 ---
 
@@ -110,12 +121,18 @@ If you plan to disable the Google TV Launcher, install a backup launcher first s
 
 ## 🛠️ Troubleshooting: ADB Connection Issues
 
-If you see `cannot connect to [IP]:5555` or an ADB compatibility error, the bundled ADB binaries may be outdated for your system.
+**"adb not found" error:**
+The toolkit looks for ADB in the `adb/` folder next to the script. Make sure you unzipped the full project (not just the `.py` file).
 
-**Fix:** Replace the files in the `adb/` folder with the latest version:
+**32-bit ADB / incompatible with 64-bit Windows:**
+The bundled `adb.exe` may be 32-bit. Replace the files in the `adb/` folder with the latest 64-bit version:
 - Download from [Google's official platform-tools](https://developer.android.com/studio/releases/platform-tools)
 - Copy `adb.exe`, `AdbWinApi.dll`, and `AdbWinUsbApi.dll` into the `adb/` folder, replacing the existing files
-- Try connecting again
+
+**"Failed to connect" / "connection refused":**
+- Make sure ADB Debugging is enabled on the TV
+- Make sure the TV and PC are on the same Wi-Fi network
+- If using a Chromecast or Android 11+ device, use the **Pair & Connect** button instead of **Connect to TV**
 
 ---
 
@@ -125,7 +142,7 @@ If you see `cannot connect to [IP]:5555` or an ADB compatibility error, the bund
 **A:** Yes — Python 3.8+ and the `PySimpleGUI` library (`pip install PySimpleGUI`). This replaced the old `.exe` approach to eliminate antivirus false positives.
 
 **Q: Will this work on all Android TV devices?**  
-**A:** The Toolkit is designed for devices that support ADB Debugging — TCL TVs, Onn 4K boxes, and Nvidia Shield TV. Start with Safe Debloat mode if you are unsure.
+**A:** The Toolkit is designed for devices that support ADB Debugging — TCL TVs, Onn 4K boxes, and Nvidia Shield TV. Chromecast with Google TV is supported via the Pair & Connect option. Start with Safe Debloat mode if you are unsure.
 
 **Q: Is there a risk of disabling important apps?**  
 **A:** Always start with **Safe Debloat**, which only removes known bloatware. The Advanced mode shows risk ratings for each app (✅ / ⚠️ / 🚫) so you can make informed choices.
@@ -135,6 +152,9 @@ If you see `cannot connect to [IP]:5555` or an ADB compatibility error, the bund
 
 **Q: The old `.exe` got flagged by my antivirus. Is this version safe?**  
 **A:** Yes. See the [Why Did Antivirus Flag This?](#️-why-did-antivirus-flag-this-as-a-trojan) section above. Running from Python source removes every trigger that caused those false positives.
+
+**Q: Is this project actively maintained?**  
+**A:** Not actively. The toolkit works as described and issues are read, but updates may be infrequent. The source code is short and well-structured — contributions via pull request are welcome.
 
 ---
 
@@ -148,6 +168,7 @@ If you see `cannot connect to [IP]:5555` or an ADB compatibility error, the bund
 | Error reporting | Fragile string matching on command output | Return codes checked; errors shown clearly |
 | ADB target | Port hardcoded to 5555 in some places | Consistent `ip:port` target throughout |
 | State management | Global variables | `TVConnection` class |
+| Android 11+ / Chromecast | Not supported | New Pair & Connect flow |
 
 ---
 
