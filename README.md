@@ -173,18 +173,52 @@ The bundled `adb.exe` may be 32-bit. Replace the files in the `adb/` folder with
 ---
 
 
-## 🔨 Building a Windows Executable (Optional)
 
-If you prefer a standalone `.exe` over running from Python source, you can build one yourself:
+## 🔨 Building Your Own Windows Executable (Optional)
 
-1. Install PyInstaller: `pip install pyinstaller`
-2. Run from the project folder:
-   ```
-   pyinstaller --onefile --windowed run_toolkit.py
-   ```
-3. Find the output in the `dist/` folder as `run_toolkit.exe`
+Some people prefer to use a `.exe` file rather than running a Python script — it feels more like a normal Windows app. You can build one yourself from the source code. Because **you** built it on **your** machine, Windows will trust it.
 
-> **Important:** A self-built exe is trusted by your own machine but will likely trigger antivirus warnings on anyone else's — this is a known PyInstaller false positive, not malware. See the [Why Did Antivirus Flag This?](#️-why-did-antivirus-flag-this-as-a-trojan) section above. For sharing with others, always point them to the Python source.
+> **Why not just download a pre-built exe?** A pre-built exe created by someone else will often trigger antivirus warnings — not because it contains malware, but because Windows is suspicious of executables from the internet that it hasn't seen before. Building it yourself avoids this entirely.
+
+### What you need first
+
+Make sure you have already completed Steps 1 and 2 from the Setup section above (Python installed and PySimpleGUI installed).
+
+### Step-by-step
+
+**Step 1 — Install PyInstaller**
+
+PyInstaller is a free tool that packages a Python script into a standalone `.exe`. Open a Command Prompt and run:
+
+```
+pip install pyinstaller
+```
+
+This downloads and installs PyInstaller automatically. You only need to do this once.
+
+**Step 2 — Open a Command Prompt in the project folder**
+
+Navigate to the folder where you unzipped this project. Click the address bar at the top of File Explorer, type `cmd`, and press Enter. This opens a Command Prompt already pointing at the right folder.
+
+**Step 3 — Run the build command**
+
+Type the following and press Enter:
+
+```
+pyinstaller --onefile --windowed run_toolkit.py
+```
+
+What this does:
+- `--onefile` packages everything into a single `.exe` file (easier to use)
+- `--windowed` prevents a black console window from appearing when you run the app
+
+This will take 30–60 seconds. You will see a lot of text scroll by — that is normal.
+
+**Step 4 — Find your exe**
+
+When it finishes, open the `dist` folder inside the project folder. Your `run_toolkit.exe` is in there. You can move it anywhere you like — your Desktop, for example.
+
+> **Note:** This exe will work on your machine but may still trigger antivirus warnings if you send it to someone else. That is expected behaviour — see the [Why Did Antivirus Flag This?](#️-why-did-antivirus-flag-this-as-a-trojan) section. If you want to share the toolkit with someone, send them the Python source and point them to the Setup instructions instead.
 ## Credits
 
 Inspired by the Reddit Android TV community.  
