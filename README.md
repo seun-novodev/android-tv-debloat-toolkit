@@ -172,6 +172,19 @@ The bundled `adb.exe` may be 32-bit. Replace the files in the `adb/` folder with
 
 ---
 
+
+## 🔨 Building a Windows Executable (Optional)
+
+If you prefer a standalone `.exe` over running from Python source, you can build one yourself:
+
+1. Install PyInstaller: `pip install pyinstaller`
+2. Run from the project folder:
+   ```
+   pyinstaller --onefile --windowed run_toolkit.py
+   ```
+3. Find the output in the `dist/` folder as `run_toolkit.exe`
+
+> **Important:** A self-built exe is trusted by your own machine but will likely trigger antivirus warnings on anyone else's — this is a known PyInstaller false positive, not malware. See the [Why Did Antivirus Flag This?](#️-why-did-antivirus-flag-this-as-a-trojan) section above. For sharing with others, always point them to the Python source.
 ## Credits
 
 Inspired by the Reddit Android TV community.  
