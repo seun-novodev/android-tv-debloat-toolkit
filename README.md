@@ -4,7 +4,6 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/seun-novodev/android-tv-debloat-toolkit?style=for-the-badge)](https://github.com/seun-novodev/android-tv-debloat-toolkit/releases/latest)
 
-
 # Android TV Toolkit
 
 Lightweight Windows application to debloat TCL/Google Android TV devices, install APKs, and customize the TV experience.
@@ -23,141 +22,143 @@ Built using Python and PySimpleGUI.
 
 ---
 
+## ⚠️ Why Did Antivirus Flag This as a Trojan?
+
+**Short answer: it was a false positive. There is no trojan, spyware, or malicious code in this project.**
+
+Previous versions included a pre-built `run_toolkit.exe` file. This triggered antivirus warnings for three reasons — none of which involve actual malware:
+
+1. **PyInstaller packaging** — The exe was built with PyInstaller, which bundles a Python runtime and unpacks itself into a temporary folder at launch. This self-extracting behaviour is identical to how some malware operates, so antivirus tools flag it heuristically even when the code inside is completely clean.
+2. **Shell command execution** — The old code used `os.popen()` to run ADB commands, which passes commands through the Windows shell. Antivirus tools see a GUI program silently spawning shell processes and treat it as suspicious.
+3. **Bundled ADB binaries** — Shipping `adb.exe` inside a zip alongside an unsigned executable is another common malware pattern that triggers heuristic detection.
+
+**What changed in v1.2:**
+- The pre-built `run_toolkit.exe` has been **removed from the repo entirely**. You run the toolkit directly from the Python source — no packaging, nothing to flag.
+- All shell commands have been rewritten to use Python's `subprocess` module with explicit argument lists (no shell involvement), which is both safer and less suspicious to antivirus tools.
+- Input validation was added so no user-supplied data is ever passed unsanitised to a system command.
+
+You are encouraged to read the source code (`run_toolkit.py`) yourself — it is short, straightforward, and does exactly what it says.
+
+---
+
 ## Requirements
 - Windows 10 or 11
+- **Python 3.8 or later** — [Download from python.org](https://www.python.org/downloads/)
 - TV must have Developer Options enabled
 - ADB Debugging turned ON
 - TV and PC must be on the same Wi-Fi network
 
 ---
 
-## Setup Instructions
-1. Enable Developer Options (Settings > Device Preferences > About > Build Number > Click 7 times).
-2. Turn on ADB Debugging.
-3. Download and unzip this project.
-4. Run `run_toolkit.exe`.
-5. Enter your TV's IP address and use the provided options.
+## 🚀 Setup & Usage (v1.2+)
+
+### Step 1 — Install Python
+
+Download and install Python 3.8+ from [python.org](https://www.python.org/downloads/).  
+During installation, check **"Add Python to PATH"**.
+
+### Step 2 — Install the required library
+
+Open a Command Prompt and run:
+
+```
+pip install PySimpleGUI
+```
+
+### Step 3 — Download this project
+
+Click the green **Code** button on this page → **Download ZIP**, then unzip it anywhere.
+
+### Step 4 — Enable ADB on your TV
+
+1. Go to **Settings → Device Preferences → About → Build Number** and click it 7 times to unlock Developer Options.
+2. Go to **Settings → Device Preferences → Developer Options** and turn on **ADB Debugging**.
+
+### Step 5 — Run the Toolkit
+
+Open a Command Prompt in the project folder and run:
+
+```
+python run_toolkit.py
+```
+
+Or double-click `run_toolkit.py` if Python is associated with `.py` files on your system.
+
+### Step 6 — Connect and use
+
+1. Click **Connect to TV** and enter your TV's IP address (find it under **Settings → Network → About**).
+2. Choose a function:
+   - **Safe Debloat** — recommended first run; removes common bloatware safely
+   - **Advanced Debloat** — more options with risk ratings (✅ Safe / ⚠️ Caution / 🚫 Critical)
+   - **Install APK** — install apps directly to your TV
+   - **Disable Google TV Launcher** — only do this after installing a backup launcher like FLauncher
 
 ---
 
 ## Optional: FLauncher (Custom Launcher)
 
-If you plan to disable Google TV Launcher, install a backup launcher first.
+If you plan to disable the Google TV Launcher, install a backup launcher first so you don't get locked out.
 
-Download FLauncher APK here: See where to download below (there might be other sources online)
+1. Download the FLauncher APK from [APKPure](https://apkpure.com/flauncher/me.efesser.flauncher).
+2. Use the **Install APK** button in the Toolkit to push it to your TV.
+3. Open FLauncher from your TV's Apps list to confirm it works.
+4. Then use **Disable Google TV Launcher** in the Toolkit.
 
-Steps:
-1. Install FLauncher using the "Install APK" button inside this Toolkit.
-2. Open FLauncher manually from your TV Apps list.
-3. (Optional) Set it as default launcher if prompted.
-
-✅ FLauncher is a clean, open-source, ad-free Android TV launcher.
-
----
-
-## Credits
-Inspired by the Reddit Android TV community.  
-Built for the community to simplify TV customization.
-
----
-## 📖 FAQ
-
----
-
-**Q: Do I need to install Python to run the Toolkit?**  
-**A:** No. The provided `run_toolkit.exe` is fully standalone. You can unzip and run without installing anything else.
-
----
-
-**Q: Will this work on all Android TV devices?**  
-**A:** The Toolkit is designed for Android TV devices that allow ADB Debugging. It works with TCL TVs, Onn 4K boxes, and Nvidia Shield TV (safe mode recommended first).
-
----
-
-**Q: What if I don't see Developer Options on my TV?**  
-**A:** Go to **Settings → Device Preferences → About → Build Number** and click it 7 times to unlock Developer Options.
-
----
-
-**Q: Is there a risk of disabling important apps?**  
-**A:** Always start with "**Debloat TV - Safe Mode**," which carefully removes common bloatware without affecting critical system apps.
-
----
-
-**Q: Is the Toolkit free to use?**  
-**A:** Yes! It’s open-source, released under the MIT License.
-
----
-
-## 🚀 How to Use the Toolkit
-
----
-
-**Step 1:** Enable Developer Options on your Android TV:
-- Go to **Settings → Device Preferences → About → Build Number** and click it 7 times.
-
-**Step 2:** Enable **ADB Debugging** inside Developer Options.
-
-**Step 3:** Unzip the Toolkit and open `run_toolkit.exe`.
-
-**Step 4:** Enter your TV's IP Address and click **Connect**.
-
-**Step 5:** Choose a function:
-- **Debloat TV (Safe Mode)** — recommended first
-- **Install APKs** (such as FLauncher)
-- **Remove Google TV Recommendations**
-- **Disable Google Launcher** (only after installing a backup launcher!)
-
-**Step 6:** Enjoy a faster, cleaner Android TV experience!
-
----
-
-## 📥 Where to Download FLauncher
-
----
-
-FLauncher is a minimalist launcher recommended before disabling the default Google TV launcher.  
-You can download it safely here:
-
-🔗 [Download FLauncher from APKPure](https://apkpure.com/flauncher/me.efesser.flauncher)
+✅ FLauncher is open-source, ad-free, and maintained by the community.
 
 ---
 
 ## 🛠️ Troubleshooting: ADB Connection Issues
 
-If you encounter a problem connecting your TV (for example: cannot connect to [IP address]:5555,
-or adb.exe not compatible with Windows error), it may be related to the version of ADB included.
+If you see `cannot connect to [IP]:5555` or an ADB compatibility error, the bundled ADB binaries may be outdated for your system.
 
-To fix it:
-You can manually replace the adb.exe, AdbWinApi.dll, and AdbWinUsbApi.dll files in the Toolkit's adb folder with the latest version from: https://adbdownload.com/ or directly from the official Google platform-tools if you prefer: https://developer.android.com/studio/releases/platform-tools
-
-Steps to update ADB manually:
-
-Download the latest ADB tools.
-
-Copy adb.exe, AdbWinApi.dll, and AdbWinUsbApi.dll.
-
-Replace the existing files in the adb folder inside the Toolkit directory.
-
-After replacing, try connecting your TV again through the Toolkit.
+**Fix:** Replace the files in the `adb/` folder with the latest version:
+- Download from [Google's official platform-tools](https://developer.android.com/studio/releases/platform-tools)
+- Copy `adb.exe`, `AdbWinApi.dll`, and `AdbWinUsbApi.dll` into the `adb/` folder, replacing the existing files
+- Try connecting again
 
 ---
 
-## 🛠️ About the EXE
+## 📖 FAQ
 
-The run_toolkit.exe included in this project was built from the open-source run_toolkit.pyw script using PyInstaller.
+**Q: Do I need to install anything to run the Toolkit?**  
+**A:** Yes — Python 3.8+ and the `PySimpleGUI` library (`pip install PySimpleGUI`). This replaced the old `.exe` approach to eliminate antivirus false positives.
 
-If you prefer, you can rebuild the EXE yourself using the following steps:
-python -m pip install pyinstaller
-pyinstaller --onefile --windowed run_toolkit.pyw
+**Q: Will this work on all Android TV devices?**  
+**A:** The Toolkit is designed for devices that support ADB Debugging — TCL TVs, Onn 4K boxes, and Nvidia Shield TV. Start with Safe Debloat mode if you are unsure.
 
-This project is fully open-source — nothing hidden.
+**Q: Is there a risk of disabling important apps?**  
+**A:** Always start with **Safe Debloat**, which only removes known bloatware. The Advanced mode shows risk ratings for each app (✅ / ⚠️ / 🚫) so you can make informed choices.
 
-You can review, modify, or rebuild the Toolkit freely based on your needs.
+**Q: Is the Toolkit free to use?**  
+**A:** Yes — fully open-source under the MIT License.
+
+**Q: The old `.exe` got flagged by my antivirus. Is this version safe?**  
+**A:** Yes. See the [Why Did Antivirus Flag This?](#️-why-did-antivirus-flag-this-as-a-trojan) section above. Running from Python source removes every trigger that caused those false positives.
 
 ---
 
-![Open Source Launch](https://img.shields.io/badge/Launch-Android%20TV%20Toolkit%20v1.0-brightgreen?style=for-the-badge)
+## What Changed in v1.2
+
+| Area | Before | After |
+|---|---|---|
+| Distribution | Pre-built `run_toolkit.exe` (PyInstaller) | Run from Python source directly |
+| Shell commands | `os.popen()` — passes through Windows shell | `subprocess.run()` with argument lists — no shell |
+| Input validation | None — raw user input passed to commands | IP address validated before any ADB call |
+| Error reporting | Fragile string matching on command output | Return codes checked; errors shown clearly |
+| ADB target | Port hardcoded to 5555 in some places | Consistent `ip:port` target throughout |
+| State management | Global variables | `TVConnection` class |
+
+---
+
+## Credits
+
+Inspired by the Reddit Android TV community.  
+Built for the community to simplify TV customization.
+
+---
+
+![Open Source](https://img.shields.io/badge/Open%20Source-MIT%20License-brightgreen?style=for-the-badge)
 
 ## License
 This project is licensed under the MIT License.
