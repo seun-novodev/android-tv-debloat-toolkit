@@ -1,0 +1,3 @@
+# ADB is downloaded from Google on first launch
+adb/
+__pycache__/
