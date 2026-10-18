@@ -7,8 +7,16 @@ import PySimpleGUI as sg
 # Resolve the adb executable: prefer the bundled adb/ subfolder next to this
 # script so users don't need ADB on their system PATH.
 def _find_adb():
+    import platform
     script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    local = os.path.join(script_dir, "adb", "adb.exe")
+
+    # Determine platform-specific adb binary name
+    if platform.system() == "Windows":
+        adb_name = "adb.exe"
+    else:  # macOS, Linux
+        adb_name = "adb"
+
+    local = os.path.join(script_dir, "adb", adb_name)
     return local if os.path.isfile(local) else "adb"
 
 ADB = _find_adb()

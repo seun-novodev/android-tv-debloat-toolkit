@@ -6,7 +6,7 @@
 
 # Android TV Toolkit
 
-Lightweight Windows application to debloat TCL/Google Android TV devices, install APKs, and customize the TV experience.
+Cross-platform application to debloat TCL/Google Android TV devices, install APKs, and customize the TV experience. Works on Windows, macOS, and Linux.
 
 Built using Python and PySimpleGUI.
 
@@ -45,11 +45,34 @@ You are encouraged to read the source code (`run_toolkit.py`) yourself — it is
 ---
 
 ## Requirements
-- Windows 10 or 11
+- **Windows:** Windows 10 or 11
+- **macOS:** macOS 10.14 or later (requires Homebrew for ADB installation)
+- **Linux:** Any modern distribution
 - **Python 3.8 or later** — [Download from python.org](https://www.python.org/downloads/)
 - TV must have Developer Options enabled
 - ADB Debugging turned ON
-- TV and PC must be on the same Wi-Fi network
+- TV and PC/Mac must be on the same Wi-Fi network
+
+### Platform-Specific ADB Setup
+
+**Windows:** ADB binaries are bundled in the `adb/` folder — no additional installation needed.
+
+**macOS:** Install ADB via Homebrew:
+```bash
+brew install android-platform-tools
+```
+
+**Linux:** Install ADB via your package manager:
+```bash
+# Debian/Ubuntu
+sudo apt install adb
+
+# Fedora
+sudo dnf install android-tools
+
+# Arch Linux
+sudo pacman -S android-tools
+```
 
 ---
 
@@ -57,15 +80,20 @@ You are encouraged to read the source code (`run_toolkit.py`) yourself — it is
 
 ### Step 1 — Install Python
 
-Download and install Python 3.8+ from [python.org](https://www.python.org/downloads/).  
-During installation, check **"Add Python to PATH"**.
+Download and install Python 3.8+ from [python.org](https://www.python.org/downloads/).
+**Windows users:** During installation, check **"Add Python to PATH"**.
+**macOS/Linux users:** Python may already be installed. Verify with `python3 --version`.
 
 ### Step 2 — Install the required library
 
-Open a Command Prompt and run:
+Open a terminal (Command Prompt on Windows, Terminal on macOS/Linux) and run:
 
-```
+```bash
+# Windows
 pip install PySimpleGUI
+
+# macOS/Linux
+pip3 install PySimpleGUI
 ```
 
 > **PySimpleGUI licence note:** PySimpleGUI v5+ requires a free account at [PySimpleGUI.com](https://www.pysimplegui.com) to suppress the licence prompt. No payment is needed for personal use — just sign up and the prompt goes away.
@@ -81,13 +109,17 @@ Click the green **Code** button on this page → **Download ZIP**, then unzip it
 
 ### Step 5 — Run the Toolkit
 
-Open a Command Prompt in the project folder and run:
+Open a terminal in the project folder and run:
 
-```
+```bash
+# Windows
 python run_toolkit.py
+
+# macOS/Linux
+python3 run_toolkit.py
 ```
 
-Or double-click `run_toolkit.py` if Python is associated with `.py` files on your system.
+**Windows users:** You can also double-click `run_toolkit.py` if Python is associated with `.py` files on your system.
 
 ### Step 6 — Connect and use
 
@@ -122,12 +154,22 @@ If you plan to disable the Google TV Launcher, install a backup launcher first s
 ## 🛠️ Troubleshooting: ADB Connection Issues
 
 **"adb not found" error:**
-The toolkit looks for ADB in the `adb/` folder next to the script. Make sure you unzipped the full project (not just the `.py` file).
+
+*Windows:* The toolkit looks for ADB in the `adb/` folder next to the script. Make sure you unzipped the full project (not just the `.py` file).
+
+*macOS/Linux:* Install ADB using your package manager (see Platform-Specific ADB Setup above).
 
 **32-bit ADB / incompatible with 64-bit Windows:**
 The bundled `adb.exe` may be 32-bit. Replace the files in the `adb/` folder with the latest 64-bit version:
 - Download from [Google's official platform-tools](https://developer.android.com/studio/releases/platform-tools)
 - Copy `adb.exe`, `AdbWinApi.dll`, and `AdbWinUsbApi.dll` into the `adb/` folder, replacing the existing files
+
+**macOS "Permission denied" error:**
+If you see a permission error, ensure ADB is properly installed via Homebrew:
+```bash
+brew install android-platform-tools
+adb version  # Should show version info
+```
 
 **"Failed to connect" / "connection refused":**
 - Make sure ADB Debugging is enabled on the TV
