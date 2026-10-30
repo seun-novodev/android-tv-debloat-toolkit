@@ -382,7 +382,7 @@ def safe_debloat_checklist():
         [sg.Button("Select All"), sg.Button("Deselect All")],
         [sg.Button("Apply Selected Changes"), sg.Button("Cancel")],
     ]
-    window = sg.Window("Safe Debloat (Choose Apps)", layout)
+    window = sg.Window("Safe Debloat (Choose Apps)", layout, size=(560, 500), resizable=True)
     while True:
         event, values = window.read()
         if event in (sg.WINDOW_CLOSED, "Cancel"):
@@ -417,7 +417,7 @@ def advanced_debloat():
         [sg.Button("Select All Safe Apps"), sg.Button("Deselect All")],
         [sg.Button("Apply Selected Changes"), sg.Button("Cancel")],
     ]
-    window = sg.Window("Advanced Debloat", layout)
+    window = sg.Window("Advanced Debloat", layout, size=(560, 500), resizable=True)
     while True:
         event, values = window.read()
         if event in (sg.WINDOW_CLOSED, "Cancel"):
