@@ -1,0 +1,8 @@
+# Shell scripts must keep LF endings or they fail on macOS/Linux ("bad interpreter").
+*.sh      text eol=lf
+*.command text eol=lf
+*.py      text eol=lf
+
+# Bundled Windows ADB binaries
+*.exe binary
+*.dll binary

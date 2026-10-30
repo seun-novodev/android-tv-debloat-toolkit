@@ -6,9 +6,9 @@
 
 # Android TV Toolkit
 
-Cross-platform application to debloat TCL/Google Android TV devices, install APKs, and customize the TV experience.
+Cross-platform desktop application (Windows, macOS and Linux) to debloat TCL/Google Android TV devices, install APKs, and customize the TV experience.
 
-Built using Python and PySimpleGUI.
+Built using Python and FreeSimpleGUI.
 
 > **Maintenance status:** This project is not actively maintained. It works as described and issues are read, but updates and responses may be slow. Pull requests are welcome -- see the source code, it's short and straightforward.
 
@@ -17,10 +17,11 @@ Built using Python and PySimpleGUI.
 ## Features
 - Connect to Android TV over Wi-Fi (ADB Wireless)
 - Pair & Connect for Android 11+ / Chromecast with Google TV (Wireless Debugging)
-- Debloat TCL and Google bloatware
-- Remove Google TV Recommendations
+- Debloat TCL and Google bloatware (apps are disabled, not uninstalled — fully reversible)
+- Disable Google TV Recommendations
+- Re-enable any disabled app (undo)
 - Install APKs remotely (FLauncher included)
-- Disable Google Launcher safely (after installing a custom launcher)
+- Disable the Google TV / Android TV launcher safely (refuses unless another launcher is installed)
 - Reboot TV remotely
 
 ---
@@ -52,12 +53,12 @@ You are encouraged to read the source code (`run_toolkit.py`) yourself -- it is 
 - **Python 3.8 or later** -- [Download from python.org](https://www.python.org/downloads/)
 
 **macOS:**
-- macOS 10.14 (Mojave) or later
-- Python 3.8 or later (use `brew install python` or [python.org](https://www.python.org/downloads/))
+- macOS on Apple Silicon or Intel
+- Python 3.8 or later with Tk 8.6+ ([python.org](https://www.python.org/downloads/) recommended, or Homebrew's `python` plus `python-tk`)
 
 **Linux:**
 - Any modern distribution
-- Python 3.8 or later (`sudo apt install python3` or equivalent)
+- Python 3.8 or later with Tk (`sudo apt install python3 python3-venv python3-tk` or equivalent)
 
 **All platforms:**
 - TV must have Developer Options enabled
@@ -72,47 +73,46 @@ You are encouraged to read the source code (`run_toolkit.py`) yourself -- it is 
 
 **Windows:** Download and install Python 3.8+ from [python.org](https://www.python.org/downloads/). During installation, check **"Add Python to PATH"**.
 
-**macOS:**
-```
-brew install python
-```
-Or download from [python.org](https://www.python.org/downloads/).
+**macOS:** the [python.org](https://www.python.org/downloads/) installer is recommended because it includes Tk, which the GUI needs. With Homebrew instead, run `brew install python python-tk`. Don't use Apple's built-in `/usr/bin/python3` -- its Tk 8.5 freezes on modern macOS.
 
 **Linux (Debian/Ubuntu):**
 ```
-sudo apt install python3 python3-pip
+sudo apt install python3 python3-venv python3-tk
 ```
 
-### Step 2 -- Install the required library
-
-**Windows:**
-```
-pip install PySimpleGUI
-```
-
-**macOS/Linux:**
-```
-pip3 install PySimpleGUI
-```
-
-> **PySimpleGUI licence note:** PySimpleGUI v5+ requires a free account at [PySimpleGUI.com](https://www.pysimplegui.com) to suppress the licence prompt. No payment is needed for personal use -- just sign up and the prompt goes away.
-
-### Step 3 -- Download this project
+### Step 2 -- Download this project
 
 Click the green **Code** button on this page -> **Download ZIP**, then unzip it anywhere.
+
+### Step 3 -- Install the required library
+
+**Windows:** open a Command Prompt in the project folder and run:
+```
+pip install -r requirements.txt
+```
+
+**macOS:** nothing to do here -- the `run_toolkit.command` launcher in Step 6 sets everything up the first time you run it. (Prefer doing it by hand? See [Running from Terminal on macOS](#running-from-terminal-on-macos).)
+
+**Linux:** in a terminal in the project folder, run:
+```
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+> **Why FreeSimpleGUI?** PySimpleGUI v5+ became closed-source and requires a licence key. [FreeSimpleGUI](https://github.com/spyoungtech/FreeSimpleGUI) is the free, open-source (LGPL) fork with the same API, so there is no licence prompt.
 
 ### Step 4 -- Enable ADB on your TV
 
 1. Go to **Settings -> Device Preferences -> About -> Build Number** and click it 7 times to unlock Developer Options.
 2. Go to **Settings -> Device Preferences -> Developer Options** and turn on **ADB Debugging**.
 
-### Step 5 -- Install ADB (if not auto-downloaded)
+### Step 5 -- Install ADB
 
-On first launch, if ADB is not found, the toolkit offers to download it from Google automatically (Windows only). On macOS/Linux, install it manually:
+**Windows:** nothing to do. On first launch, if ADB is not found, the toolkit offers to download it from Google's official servers (`dl.google.com`) with one click.
 
 **macOS:**
 ```
-brew install android-platform-tools
+brew install --cask android-platform-tools
 ```
 
 **Linux (Debian/Ubuntu):**
@@ -137,27 +137,41 @@ sudo pacman -S android-tools
 python run_toolkit.py
 ```
 
-**macOS/Linux:**
+Or double-click `run_toolkit.pyw` to start it without a console window.
+
+**macOS:** double-click **`run_toolkit.command`** in Finder. The first launch takes a minute: it finds a suitable Python, creates a private environment in a `.venv` folder inside the project and installs the requirements. Later launches start straight away.
+
+> **"cannot be opened because it is from an unidentified developer"?** macOS blocks downloaded scripts the first time. Right-click (or Control-click) `run_toolkit.command` -> **Open** -> **Open**. You only need to do this once. If Finder says the file isn't executable, run `chmod +x run_toolkit.command` in Terminal, or start it with `bash run_toolkit.command`.
+
+#### Running from Terminal on macOS
+
 ```
-python3 run_toolkit.py
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python run_toolkit.py
 ```
 
-Or double-click `run_toolkit.py` if Python is associated with `.py` files on your system.
+**Linux:**
+```
+.venv/bin/python run_toolkit.py
+```
 
 ### Step 7 -- Connect and use
 
 **Standard Android TV (TCL, Onn, Nvidia Shield):**
-1. Click **Connect to TV** and enter your TV's IP address (find it under **Settings -> Network -> About**).
+1. Click **Connect to TV** and enter your TV's IP address (find it under **Settings -> Network -> About**). If your TV uses a port other than 5555, enter it as `IP:port`.
 
 **Android 11+ / Chromecast with Google TV:**
 1. Enable **Wireless Debugging** in Developer Options (separate from ADB Debugging).
-2. Click **Pair & Connect (Android 11+ / Chromecast)** and fill in the IP, Pairing Port, Pairing Code, and Debug Port shown on your TV's Wireless Debugging screen.
+2. Click **Pair & Connect (Android 11+ / Chromecast)** and fill in the IP, Pairing Port, Pairing Code, and Debug Port shown on your TV's Wireless Debugging screen. The pairing port and the debug port are different, and both change each time -- a TV restart also turns Wireless Debugging off.
 
 Then choose a function:
-- **Safe Debloat** -- recommended first run; removes common bloatware safely
-- **Advanced Debloat** -- more options with risk ratings (Safe / Caution / Critical)
+- **Safe Debloat** -- recommended first run; disables common bloatware. Apps that aren't on your TV are greyed out.
+- **Advanced Debloat** -- more options with risk ratings (Safe / Caution / Critical). Critical apps ask for confirmation.
+- **Re-enable Apps** -- lists every disabled app on the TV so you can turn any of them back on
 - **Install APK** -- install apps directly to your TV
-- **Disable Google TV Launcher** -- only do this after installing a backup launcher like FLauncher
+- **Disable Google TV Launcher** -- disables the Google TV (Chromecast) or Android TV home screen. It refuses unless another launcher such as FLauncher is installed, and asks before doing anything.
+- **Reboot TV** -- restarts the TV (asks first)
 
 ---
 
@@ -174,12 +188,32 @@ FLauncher is open-source, ad-free, and maintained by the community.
 
 ---
 
+## Running the Tests (for contributors)
+
+The unit tests fake all adb calls, so no TV is needed:
+
+```
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+On macOS and Linux, run these with your virtual environment's Python (`.venv/bin/python -m pip ...` and `.venv/bin/python -m pytest`).
+
+GitHub Actions runs the same tests on Windows, macOS (Apple Silicon and Intel) and Linux for every pull request, opens every window for real (`ATV_GUI_TESTS=1`), and checks that the Windows `.exe` and macOS `.app` build and start.
+
+---
+
 ## Troubleshooting: ADB Connection Issues
 
-**"adb not found" error, or `WinError 216` / "not compatible with the version of Windows":**
-ADB is missing or the `adb/adb.exe` file is damaged (older copies of this repo shipped an empty `adb.exe`). Restart the toolkit and click **Yes** when it offers to download ADB. If the automatic download fails (firewall, proxy), install it manually:
-- Download from [Google's official platform-tools](https://developer.android.com/tools/releases/platform-tools)
-- Copy `adb.exe`, `AdbWinApi.dll`, and `AdbWinUsbApi.dll` into the `adb/` folder next to the toolkit, replacing any existing files
+**"adb not found" error:**
+The toolkit looks for ADB in this order: the `ADB_PATH` environment variable, the `adb/` folder next to the toolkit, then your `PATH` plus the usual install locations (Homebrew's `/opt/homebrew/bin` and `/usr/local/bin`, and Android Studio's `platform-tools`).
+- **Windows:** restart the toolkit and click **Yes** when it offers to download ADB. If the automatic download fails (firewall, proxy), download [Google's official platform-tools](https://developer.android.com/tools/releases/platform-tools) and copy `adb.exe`, `AdbWinApi.dll`, and `AdbWinUsbApi.dll` into the `adb/` folder next to the toolkit, replacing any existing files. (Older copies of this repo shipped an empty `adb.exe`, which caused `WinError 216` / "not compatible with the version of Windows"; the toolkit now ignores it.)
+- **macOS:** run `brew install --cask android-platform-tools`, or set `ADB_PATH` to the full path of your `adb`.
+- **Linux:** install it with your package manager (see Step 5).
+
+**"This Python has no Tk" / "needs Tk 8.6":**
+- **macOS:** install Python from [python.org](https://www.python.org/downloads/), or with Homebrew run `brew install python-tk`. Then double-click `run_toolkit.command` again -- it notices the broken environment and rebuilds it. (If you set it up by hand, delete the `.venv` folder and redo [Running from Terminal on macOS](#running-from-terminal-on-macos).)
+- **Linux:** `sudo apt install python3-tk` (or your distro's Tk package).
 
 **macOS: "Permission denied" when running `adb`:**
 Run this once to make adb executable:
@@ -201,7 +235,7 @@ chmod +x adb/adb
 ## FAQ
 
 **Q: Do I need to install anything to run the Toolkit?**
-**A:** Yes -- Python 3.8+ and the `PySimpleGUI` library (`pip install PySimpleGUI`). This replaced the old `.exe` approach to eliminate antivirus false positives.
+**A:** Yes -- Python 3.8+ and the `FreeSimpleGUI` library (`pip install -r requirements.txt`; on macOS `run_toolkit.command` does this for you), plus ADB (downloaded automatically on Windows; see Step 5 for macOS/Linux). This replaced the old `.exe` approach to eliminate antivirus false positives.
 
 **Q: Will this work on all Android TV devices?**
 **A:** The Toolkit is designed for devices that support ADB Debugging -- TCL TVs, Onn 4K boxes, and Nvidia Shield TV. Chromecast with Google TV is supported via the Pair & Connect option. Start with Safe Debloat mode if you are unsure.
@@ -243,7 +277,7 @@ Some people prefer to use a `.exe` file rather than running a Python script -- i
 
 ### What you need first
 
-Make sure you have already completed Steps 1 and 2 from the Setup section above (Python installed and PySimpleGUI installed).
+Make sure you have already completed Steps 1–3 from the Setup section above (Python installed, project downloaded, and FreeSimpleGUI installed).
 
 ### Step-by-step
 
@@ -277,9 +311,29 @@ This will take 30-60 seconds. You will see a lot of text scroll by -- that is no
 
 **Step 4 -- Find your exe**
 
-When it finishes, open the `dist` folder inside the project folder. Your `run_toolkit.exe` is in there. You can move it anywhere you like -- your Desktop, for example.
+When it finishes, open the `dist` folder inside the project folder. Your `run_toolkit.exe` is in there. You can move it anywhere you like -- your Desktop, for example. On first launch it offers to download ADB into an `adb` folder next to itself.
 
 > **Note:** This exe will work on your machine but may still trigger antivirus warnings if you send it to someone else. That is expected behaviour -- see the [Why Did Antivirus Flag This?](#why-did-antivirus-flag-this-as-a-trojan) section. If you want to share the toolkit with someone, send them the Python source and point them to the Setup instructions instead.
+
+---
+
+## Building a macOS App (Optional)
+
+Double-clicking `run_toolkit.command` is the easiest way to run the toolkit on a Mac. If you'd rather have a normal app you can keep in Applications and the Dock, you can build one:
+
+1. Run `run_toolkit.command` once, so the Python environment is set up.
+2. In Terminal, in the project folder, run:
+
+   ```
+   ./build_macos_app.sh
+   ```
+
+3. Your app is at `dist/Android TV Toolkit.app`. Drag it to Applications.
+
+Notes:
+- The app is built for your Mac's chip (Apple Silicon or Intel).
+- It isn't notarised by Apple (that needs a paid developer account), so it runs on the Mac that built it. If you copy it to another Mac, Gatekeeper will block it until you run `xattr -cr "/Applications/Android TV Toolkit.app"` on that Mac.
+- ADB isn't included -- install it with `brew install --cask android-platform-tools`. The app finds Homebrew's ADB even when started from Finder or the Dock.
 
 ---
 

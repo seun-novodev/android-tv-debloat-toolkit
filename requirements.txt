@@ -1,0 +1,1 @@
+FreeSimpleGUI>=5.2.0  # 5.2.0 fixed Tk 9 (Homebrew Python on macOS)
