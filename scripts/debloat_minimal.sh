@@ -1,6 +1,6 @@
 #!/bin/sh
-# Remove Google TV Recommendations (only)
+# Disable Google TV Recommendations (only). Undo: pm enable --user 0 <package>
 
-pm uninstall --user 0 com.google.android.tvrecommendations
+pm disable-user --user 0 com.google.android.tvrecommendations
 
-echo "Recommendations removed! TV should be faster."
+echo "Recommendations disabled! TV should be faster."

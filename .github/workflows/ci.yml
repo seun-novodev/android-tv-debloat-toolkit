@@ -1,0 +1,212 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check for case-colliding filenames
+        shell: bash
+        run: |
+          dups=$(git ls-files | sort -f | uniq -di)
+          if [[ -n "$dups" ]]; then
+            echo "Tracked files differing only by case:" >&2
+            echo "$dups" >&2
+            exit 1
+          fi
+
+      - name: Check shell scripts for CRLF line endings
+        shell: bash
+        run: |
+          mapfile -t scripts < <(git ls-files '*.sh' '*.command')
+          for f in "${scripts[@]}"; do
+            if LC_ALL=C grep -q $'\r' "$f"; then
+              echo "CRLF line endings found in: $f" >&2
+              exit 1
+            fi
+          done
+
+      - name: Check shell script syntax with bash -n
+        shell: bash
+        run: |
+          mapfile -t scripts < <(git ls-files '*.sh' '*.command')
+          for f in "${scripts[@]}"; do
+            bash -n "$f"
+          done
+
+      - name: Verify shell scripts are tracked as executable (mode 100755)
+        shell: bash
+        run: |
+          for f in run_toolkit.command build_macos_app.sh; do
+            mode=$(git ls-files -s -- "$f" | awk '{print $1}')
+            if [[ "$mode" != "100755" ]]; then
+              echo "Expected $f to be tracked with mode 100755, got '$mode'" >&2
+              exit 1
+            fi
+          done
+
+  test:
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+          - macos-15-intel
+        python:
+          - '3.10'
+          - '3.14'
+        exclude:
+          # setup-python's Intel macOS 3.10 build pairs Tk 8.5 headers with the
+          # Tk 8.6 library, so tkinter can't open windows ("tk.h version (8.5)
+          # doesn't match libtk.a version (8.6)") and the toolkit rightly refuses it.
+          - os: macos-15-intel
+            python: '3.10'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install Xvfb on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
+      - name: Install development dependencies
+        shell: bash
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Print Tcl/Tk version
+        shell: bash
+        run: python -c 'import tkinter; print(tkinter.TkVersion, tkinter.Tcl().eval("info patchlevel"))'
+
+      - name: Run pytest (Ubuntu under Xvfb)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          ATV_GUI_TESTS: '1'
+        run: xvfb-run -a python -m pytest -v
+
+      - name: Run pytest
+        if: matrix.os != 'ubuntu-latest'
+        shell: bash
+        env:
+          ATV_GUI_TESTS: '1'
+        run: python -m pytest -v
+
+  build-windows:
+    name: Build Windows executable
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies and PyInstaller
+        shell: bash
+        run: python -m pip install -r requirements.txt pyinstaller
+
+      - name: Build Windows executable with PyInstaller
+        shell: bash
+        run: |
+          pyinstaller --onefile --windowed run_toolkit.py
+          test -f dist/run_toolkit.exe
+
+      - name: Smoke test Windows executable
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/run_toolkit.exe")) {
+            throw "dist/run_toolkit.exe does not exist"
+          }
+          $proc = Start-Process -FilePath "dist/run_toolkit.exe" -PassThru
+          Start-Sleep -Seconds 8
+          $proc.Refresh()
+          if ($proc.HasExited) {
+            throw "dist/run_toolkit.exe exited early with code $($proc.ExitCode)"
+          }
+          Stop-Process -Id $proc.Id -Force
+
+      # Intentionally do not upload dist/run_toolkit.exe as an artifact:
+      # the project deliberately does not distribute pre-built executables
+      # because unsigned PyInstaller bundles trigger antivirus false positives.
+
+  build-macos:
+    name: Build macOS app (${{ matrix.os }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - macos-15-intel
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Create virtual environment and install dependencies
+        shell: bash
+        run: python -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
+
+      - name: Build macOS application bundle
+        shell: bash
+        run: ./build_macos_app.sh
+
+      - name: Verify app bundle, code signature, and architecture
+        shell: bash
+        run: |
+          test -d "dist/Android TV Toolkit.app"
+          codesign --verify --deep --strict "dist/Android TV Toolkit.app"
+          lipo -archs "dist/Android TV Toolkit.app/Contents/MacOS/Android TV Toolkit"
+
+      - name: Smoke test macOS application bundle
+        shell: bash
+        run: |
+          open "dist/Android TV Toolkit.app"
+          sleep 8
+          pgrep -f 'Android TV Toolkit.app/Contents/MacOS'
+          pkill -f 'Android TV Toolkit.app/Contents/MacOS'
+
+      # Intentionally do not upload the built .app bundle as an artifact:
+      # the project deliberately does not distribute pre-built executables
+      # because unsigned PyInstaller builds trigger antivirus false positives
+      # and Gatekeeper warnings when downloaded from the internet.
