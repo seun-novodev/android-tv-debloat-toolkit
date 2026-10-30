@@ -39,6 +39,7 @@ Previous versions included a pre-built `run_toolkit.exe` file. This triggered an
 - The pre-built `run_toolkit.exe` has been **removed from the repo entirely**. You run the toolkit directly from the Python source — no packaging, nothing to flag.
 - All shell commands have been rewritten to use Python's `subprocess` module with explicit argument lists (no shell involvement), which is both safer and less suspicious to antivirus tools.
 - Input validation was added so no user-supplied data is ever passed unsanitised to a system command.
+- ADB is no longer bundled in the repo. On first launch the toolkit offers to download it directly from Google's official servers (`dl.google.com`) with one click.
 
 You are encouraged to read the source code (`run_toolkit.py`) yourself — it is short, straightforward, and does exactly what it says.
 
@@ -87,6 +88,8 @@ Open a Command Prompt in the project folder and run:
 python run_toolkit.py
 ```
 
+On first launch, if ADB is not installed, the toolkit asks to download it from Google (about 8 MB). Click **Yes** — it is saved in an `adb/` folder next to the toolkit and reused afterwards.
+
 Or double-click `run_toolkit.py` if Python is associated with `.py` files on your system.
 
 ### Step 6 — Connect and use
@@ -121,13 +124,10 @@ If you plan to disable the Google TV Launcher, install a backup launcher first s
 
 ## 🛠️ Troubleshooting: ADB Connection Issues
 
-**"adb not found" error:**
-The toolkit looks for ADB in the `adb/` folder next to the script. Make sure you unzipped the full project (not just the `.py` file).
-
-**32-bit ADB / incompatible with 64-bit Windows:**
-The bundled `adb.exe` may be 32-bit. Replace the files in the `adb/` folder with the latest 64-bit version:
-- Download from [Google's official platform-tools](https://developer.android.com/studio/releases/platform-tools)
-- Copy `adb.exe`, `AdbWinApi.dll`, and `AdbWinUsbApi.dll` into the `adb/` folder, replacing the existing files
+**"adb not found" error, or `WinError 216` / "not compatible with the version of Windows":**
+ADB is missing or the `adb/adb.exe` file is damaged (older copies of this repo shipped an empty `adb.exe`). Restart the toolkit and click **Yes** when it offers to download ADB. If the automatic download fails (firewall, proxy), install it manually:
+- Download from [Google's official platform-tools](https://developer.android.com/tools/releases/platform-tools)
+- Copy `adb.exe`, `AdbWinApi.dll`, and `AdbWinUsbApi.dll` into the `adb/` folder next to the toolkit, replacing any existing files
 
 **"Failed to connect" / "connection refused":**
 - Make sure ADB Debugging is enabled on the TV

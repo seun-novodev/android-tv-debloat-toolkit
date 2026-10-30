@@ -1,17 +1,96 @@
+import io
 import os
 import re
+import shutil
 import subprocess
 import sys
+import urllib.request
+import zipfile
 import PySimpleGUI as sg
 
-# Resolve the adb executable: prefer the bundled adb/ subfolder next to this
-# script so users don't need ADB on their system PATH.
-def _find_adb():
-    script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    local = os.path.join(script_dir, "adb", "adb.exe")
-    return local if os.path.isfile(local) else "adb"
+PLATFORM_TOOLS_URL = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
+PLATFORM_TOOLS_PAGE = "https://developer.android.com/tools/releases/platform-tools"
+ADB_FILES = ("adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll")
+ADB_DIR = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "adb")
 
-ADB = _find_adb()
+
+def _is_windows_executable(path):
+    # Every valid Windows executable starts with the "MZ" signature.
+    try:
+        with open(path, "rb") as f:
+            return f.read(2) == b"MZ"
+    except OSError:
+        return False
+
+
+# Resolve the adb executable: the local adb/ folder first, then the system PATH.
+def _find_adb():
+    local = os.path.join(ADB_DIR, "adb.exe")
+    if _is_windows_executable(local):
+        return local
+    return shutil.which("adb")
+
+ADB = _find_adb() or "adb"
+
+
+def download_adb():
+    """Download Google's Platform Tools and extract adb into the adb/ folder. Returns False if cancelled."""
+    buffer = io.BytesIO()
+    with urllib.request.urlopen(PLATFORM_TOOLS_URL, timeout=30) as response:
+        total = int(response.headers.get("Content-Length", 0))
+        while True:
+            chunk = response.read(64 * 1024)
+            if not chunk:
+                break
+            buffer.write(chunk)
+            done = buffer.tell()
+            if total and not sg.one_line_progress_meter(
+                "Downloading ADB", done, total,
+                f"Downloading ADB from Google... {done / 1e6:.1f} / {total / 1e6:.1f} MB",
+                key="adb_download", orientation="h", keep_on_top=True,
+            ) and done < total:
+                return False
+
+    os.makedirs(ADB_DIR, exist_ok=True)
+    with zipfile.ZipFile(buffer) as archive:
+        for name in ADB_FILES:
+            with archive.open(f"platform-tools/{name}") as src, open(os.path.join(ADB_DIR, name), "wb") as dst:
+                shutil.copyfileobj(src, dst)
+    return True
+
+
+def ensure_adb():
+    """Offer a one-click ADB download when no working adb is available."""
+    global ADB
+    found = _find_adb()
+    if found:
+        ADB = found
+        return
+    if sys.platform != "win32":
+        sg.popup("ADB was not found.\n\nInstall Android Platform Tools and make sure 'adb' is on your PATH.",
+                 title="ADB Missing")
+        return
+    choice = sg.popup_yes_no(
+        "This toolkit needs ADB, Google's official tool to talk to your TV.\n\n"
+        "Download it now from Google (about 8 MB)?",
+        title="ADB Required",
+    )
+    if choice != "Yes":
+        return
+    try:
+        if not download_adb():
+            return
+    except (OSError, zipfile.BadZipFile, KeyError) as e:
+        sg.one_line_progress_meter_cancel(key="adb_download")
+        sg.popup(
+            f"❌ ADB download failed: {e}\n\n"
+            f"You can download Platform Tools manually from:\n{PLATFORM_TOOLS_PAGE}\n\n"
+            "Then copy adb.exe, AdbWinApi.dll and AdbWinUsbApi.dll into the adb/ folder next to this toolkit.",
+            title="Download Failed",
+        )
+        return
+    ADB = _find_adb() or "adb"
+    sg.popup("✅ ADB is ready.", title="ADB Installed")
 
 
 # Fix 3: Replace global mutable state with a simple state container
@@ -48,7 +127,7 @@ def run_adb(*args):
         )
         return result.stdout, result.stderr, result.returncode
     except FileNotFoundError:
-        return "", f"adb not found at '{ADB}'. Make sure the adb/ folder is present next to this script.", 1
+        return "", f"adb not found at '{ADB}'. Restart the toolkit to download it automatically.", 1
     except subprocess.TimeoutExpired:
         return "", "ADB command timed out.", 1
 
@@ -369,6 +448,7 @@ def show_safe_debloat_list():
 
 
 def main_menu():
+    ensure_adb()
     layout = [
         [sg.Button("Connect to TV")],
         [sg.Button("Pair & Connect (Android 11+ / Chromecast)")],
